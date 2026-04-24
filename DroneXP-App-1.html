@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DroneXP — Concept App</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080a0f;
+    --surface: #0e1117;
+    --card: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+    --accent: #3d7eff;
+    --accent2: #7c3aed;
+    --gold: #f5a623;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #f0f2f8;
+    --muted: rgba(240,242,248,0.45);
+    --glow: rgba(61,126,255,0.3);
+    --glow2: rgba(124,58,237,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LAYOUT ── */
+  .app-shell {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 32px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(180deg, var(--bg) 70%, transparent);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #3d7eff, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 4px;
+  }
+
+  .nav-tab {
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .nav-tab.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(61,126,255,0.35);
+  }
+
+  .nav-tab:not(.active):hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+  /* ── SCREENS ── */
+  .screen { display: none; animation: fadeUp 0.45s cubic-bezier(0.4,0,0.2,1) both; }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── GRID ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .app-header { padding: 16px 20px 12px; }
+    .container { padding: 0 16px 80px; }
+    .nav-tab { padding: 7px 14px; font-size: 12px; }
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.14); }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left, rgba(61,126,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .card-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+
+  .card-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ── HERO XP CARD ── */
+  .hero-xp {
+    background: linear-gradient(135deg, rgba(61,126,255,0.15) 0%, rgba(124,58,237,0.12) 100%);
+    border-color: rgba(61,126,255,0.25);
+    grid-column: 1 / -1;
+    padding: 36px;
+  }
+
+  .hero-xp::before {
+    background: radial-gradient(ellipse at 80% 20%, rgba(61,126,255,0.12) 0%, transparent 60%);
+  }
+
+  .xp-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+
+  .xp-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .xp-name span {
+    background: linear-gradient(135deg, #3d7eff, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .level-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .level-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--gold), #fb923c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .level-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .xp-total {
+    font-family: 'Syne', sans-serif;
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -3px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .xp-total span { font-size: 24px; color: var(--muted); font-weight: 500; letter-spacing: -1px; }
+
+  .xp-bar-wrap {
+    margin-top: 20px;
+  }
+
+  .xp-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .xp-bar-track {
+    height: 10px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3d7eff, #a855f7, #ec4899);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+    position: relative;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .xp-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.8), 0 0 24px rgba(61,126,255,0.5);
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── STREAK ── */
+  .streak-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .streak-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+
+  .streak-dot.done {
+    background: linear-gradient(135deg, rgba(61,126,255,0.3), rgba(124,58,237,0.3));
+    border-color: rgba(61,126,255,0.5);
+  }
+
+  .streak-dot.today {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: transparent;
+    box-shadow: 0 0 16px rgba(61,126,255,0.5);
+  }
+
+  /* ── ACTIONS ── */
+  .actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .action-card {
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-card:hover { transform: translateY(-2px); }
+
+  .action-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .action-card:hover::before { opacity: 1; }
+
+  .action-card.positive { border-color: rgba(34,197,94,0.2); }
+  .action-card.positive::before { background: radial-gradient(ellipse at top left, rgba(34,197,94,0.08), transparent); }
+
+  .action-card.negative { border-color: rgba(239,68,68,0.2); }
+  .action-card.negative::before { background: radial-gradient(ellipse at top left, rgba(239,68,68,0.08), transparent); }
+
+  .action-card.gold { border-color: rgba(245,166,35,0.2); }
+  .action-card.gold::before { background: radial-gradient(ellipse at top left, rgba(245,166,35,0.08), transparent); }
+
+  .action-icon { font-size: 28px; margin-bottom: 10px; }
+
+  .action-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .action-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .action-xp {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .positive .action-xp { background: rgba(34,197,94,0.15); color: var(--green); }
+  .negative .action-xp { background: rgba(239,68,68,0.15); color: var(--red); }
+  .gold .action-xp { background: rgba(245,166,35,0.15); color: var(--gold); }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 32px 0 16px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .section-link {
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+  .section-link:hover { opacity: 1; }
+
+  /* ── DRONE SHOP ── */
+  .shop-header {
+    text-align: center;
+    padding: 40px 0 32px;
+  }
+
+  .shop-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    background: linear-gradient(135deg, #fff, rgba(255,255,255,0.6));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .shop-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245,166,35,0.1);
+    border: 1px solid rgba(245,166,35,0.25);
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 12px;
+  }
+
+  .part-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+
+  .part-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(61,126,255,0.3);
+    box-shadow: 0 20px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(61,126,255,0.1);
+  }
+
+  .part-card.unlocked {
+    border-color: rgba(34,197,94,0.3);
+  }
+
+  .part-card.locked { opacity: 0.65; }
+
+  .part-img {
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    background: radial-gradient(ellipse at center, rgba(61,126,255,0.08) 0%, transparent 70%);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+  }
+
+  .part-body { padding: 16px; }
+
+  .part-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.2px;
+  }
+
+  .part-desc { font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.4; }
+
+  .part-cost {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .part-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .part-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .part-btn.can-buy {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 12px rgba(61,126,255,0.3);
+  }
+
+  .part-btn.can-buy:hover {
+    box-shadow: 0 6px 20px rgba(61,126,255,0.5);
+    transform: translateY(-1px);
+  }
+
+  .part-btn.need-more {
+    background: rgba(255,255,255,0.07);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .part-btn.owned {
+    background: rgba(34,197,94,0.15);
+    color: var(--green);
+    cursor: default;
+  }
+
+  .part-badge-special {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .part-badge-locked {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── PROGRESS BAR MINI ── */
+  .progress-mini {
+    margin-top: 8px;
+  }
+
+  .progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.8s ease;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── WEEKLY CHECK ── */
+  .check-screen {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+  }
+
+  .check-emoji { font-size: 72px; margin-bottom: 24px; animation: float 3s ease-in-out infinite; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .check-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    margin-bottom: 12px;
+    max-width: 380px;
+  }
+
+  .check-sub { font-size: 15px; color: var(--muted); max-width: 320px; line-height: 1.6; margin-bottom: 40px; }
+
+  .check-options { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
+
+  .check-btn {
+    padding: 18px 32px;
+    border-radius: 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .check-btn:hover { transform: scale(1.02); }
+
+  .check-btn.yes {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 8px 32px rgba(61,126,255,0.3);
+  }
+
+  .check-btn.no {
+    background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.08));
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,0.3);
+  }
+
+  .check-btn-xp {
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* ── PARENT DASHBOARD ── */
+  .parent-header {
+    text-align: center;
+    padding: 40px 0 24px;
+  }
+
+  .parent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,58,237,0.12);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a78bfa;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+  }
+
+  .parent-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .stat-card {
+    padding: 20px 24px;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* ── PENDING ACTIONS ── */
+  .pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+  }
+
+  .pending-item:hover { border-color: rgba(255,255,255,0.12); }
+
+  .pending-text { font-size: 14px; font-weight: 500; }
+  .pending-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .pending-actions { display: flex; gap: 8px; }
+
+  .btn-approve, .btn-deny {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-approve {
+    background: rgba(34,197,94,0.15);
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,0.2);
+  }
+
+  .btn-approve:hover { background: rgba(34,197,94,0.25); transform: scale(1.04); }
+
+  .btn-deny {
+    background: rgba(239,68,68,0.12);
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+
+  .btn-deny:hover { background: rgba(239,68,68,0.22); transform: scale(1.04); }
+
+  /* ── PENALTY BTN ── */
+  .penalty-btn {
+    width: 100%;
+    padding: 16px;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 14px;
+    color: var(--red);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .penalty-btn:hover { background: rgba(239,68,68,0.15); transform: scale(1.01); }
+
+  /* ── BADGES ── */
+  .badge-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .badge-item {
+    padding: 10px 16px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    text-align: center;
+    min-width: 90px;
+    transition: all 0.2s;
+  }
+
+  .badge-item:hover { transform: translateY(-2px); }
+
+  .badge-item.earned {
+    background: rgba(245,166,35,0.08);
+    border-color: rgba(245,166,35,0.25);
+  }
+
+  .badge-item.locked { opacity: 0.4; filter: grayscale(0.8); }
+
+  .badge-icon { font-size: 28px; margin-bottom: 6px; }
+  .badge-name { font-size: 10px; color: var(--muted); font-weight: 500; }
+
+  /* ── NOTIFICATIONS ── */
+  .notif-banner {
+    background: linear-gradient(135deg, rgba(61,126,255,0.12), rgba(124,58,237,0.08));
+    border: 1px solid rgba(61,126,255,0.2);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: rgba(61,126,255,0.2); }
+    50% { border-color: rgba(61,126,255,0.45); }
+  }
+
+  .notif-icon { font-size: 24px; flex-shrink: 0; }
+  .notif-text { font-size: 14px; font-weight: 500; }
+  .notif-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── NOTES ── */
+  .note-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+  }
+
+  .note-item:hover { border-color: rgba(255,255,255,0.12); transform: translateX(4px); }
+
+  .note-subject {
+    flex: 1;
+  }
+
+  .note-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .note-date {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .note-grade {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-right: 16px;
+  }
+
+  .note-grade.high { color: var(--green); }
+  .note-grade.mid { color: var(--gold); }
+  .note-grade.low { color: var(--red); }
+
+  .note-xp {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .xp-earned { background: rgba(34,197,94,0.12); color: var(--green); }
+  .xp-none { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(15,20,30,0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(61,126,255,0.3);
+    border-radius: 16px;
+    padding: 14px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 20px 48px rgba(0,0,0,0.5);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── CONFETTI ── */
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confetti-fall 2s ease-in forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+  }
+
+  /* ── ARCHITECTURE SCREEN ── */
+  .arch-section { margin-bottom: 28px; }
+
+  .arch-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 12px;
+  }
+
+  .arch-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px 24px;
+  }
+
+  .tech-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .tech-item:last-child { border-bottom: none; }
+
+  .tech-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+
+  .tech-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .tech-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .tech-tag {
+    display: inline-block;
+    background: rgba(61,126,255,0.12);
+    border: 1px solid rgba(61,126,255,0.2);
+    color: #93c5fd;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 5px;
+    margin-right: 4px;
+  }
+
+  /* ── MISC ── */
+  .divider { height: 1px; background: var(--card-border); margin: 24px 0; }
+
+  .glow-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .section-intro {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 680px;
+  }
+
+  .tag {
+    display: inline-block;
+    background: rgba(61,126,255,0.1);
+    border: 1px solid rgba(61,126,255,0.2);
+    color: #93c5fd;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-right: 6px;
+    margin-bottom: 8px;
+  }
+
+  /* background ambient */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(ellipse, rgba(61,126,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(124,58,237,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app-shell, .container { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="logo">DroneXP ✦</div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button class="nav-tab" onclick="switchTab('shop')">Boutique</button>
+      <button class="nav-tab" onclick="switchTab('weekly')">Check-in</button>
+      <button class="nav-tab" onclick="switchTab('parent')">Parents</button>
+      <button class="nav-tab" onclick="switchTab('archi')">Architecture</button>
+    </nav>
+  </header>
+
+  <!-- ════════════════════════════════════
+       SCREEN 1 — DASHBOARD ENFANT
+  ════════════════════════════════════ -->
+  <div id="screen-dashboard" class="screen active">
+    <div class="container">
+
+      <!-- NOTIFICATION BANNER -->
+      <div class="notif-banner" style="margin-top:8px;">
+        <div class="notif-icon">🔔</div>
+        <div>
+          <div class="notif-text">Vérification du vendredi disponible !</div>
+          <div class="notif-sub">Réponds avant 20h pour valider ta semaine · Streak 🔥 en cours</div>
+        </div>
+      </div>
+
+      <!-- XP HERO CARD -->
+      <div class="grid-2" style="margin-bottom:0">
+        <div class="card hero-xp">
+          <div class="xp-header">
+            <div>
+              <div style="font-size:13px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Bienvenue,</div>
+              <div class="xp-name">Lucas <span>Capel</span></div>
+            </div>
+            <div class="level-badge">
+              <div class="level-text">Niv. 7</div>
+              <div class="level-label">Pilote Intermédiaire</div>
+            </div>
+          </div>
+
+          <div class="xp-total">1 <span style="font-size:32px;">850</span> <span style="font-size:18px;">XP</span></div>
+          <div style="font-size:13px;color:var(--muted);margin-top:4px;">+60 XP · Note en Maths (18/20) · Il y a 2h</div>
+
+          <div class="xp-bar-wrap">
+            <div class="xp-bar-label">
+              <span>Niv. 7 — 1850 XP</span>
+              <span>Niv. 8 — 2000 XP · encore 150 XP</span>
+            </div>
+            <div class="xp-bar-track">
+              <div class="xp-bar-fill" id="xpFill" style="width: 92.5%"></div>
+            </div>
+          </div>
+
+          <!-- STREAK -->
+          <div style="margin-top:20px;">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🔥 Streak — 5 semaines consécutives</div>
+            <div class="streak-row">
+              <div class="streak-dot done">✓</div>
+              <div class="streak-dot done">✓</div>
+              <div class="streak-dot done">✓</div>
+              <div class="streak-dot done">✓</div>
+              <div class="streak-dot today">★</div>
+              <div class="streak-dot">·</div>
+              <div class="streak-dot">·</div>
+              <div class="streak-dot">·</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONS RAPIDES -->
+      <div class="section-header">
+        <div class="section-title">Actions XP</div>
+      </div>
+      <div class="actions-grid">
+        <div class="action-card positive" onclick="addXP(50, '✅ Bonne semaine ! +50 XP')">
+          <div class="action-xp">+50 XP</div>
+          <div class="action-icon">📔</div>
+          <div class="action-title">Pas de mot carnet</div>
+          <div class="action-desc">Validation automatique chaque vendredi à 17h</div>
+        </div>
+        <div class="action-card gold" onclick="addXP(60, '🌟 Excellente note ! +60 XP')">
+          <div class="action-xp">+60 XP</div>
+          <div class="action-icon">⭐</div>
+          <div class="action-title">Note > 15/20</div>
+          <div class="action-desc">Synchronisé automatiquement via ÉcoleDirecte</div>
+        </div>
+        <div class="action-card positive" onclick="addXP(5, '📵 Journée sans écran ! +5 XP')">
+          <div class="action-xp">+5 XP</div>
+          <div class="action-icon">📵</div>
+          <div class="action-title">Sans écran</div>
+          <div class="action-desc">Journée sans écran déclarée ou validée par les parents</div>
+        </div>
+        <div class="action-card negative">
+          <div class="action-xp">−10 XP</div>
+          <div class="action-icon">⚠️</div>
+          <div class="action-title">Pénalité</div>
+          <div class="action-desc">Ajoutée par les parents via leur interface dédiée</div>
+        </div>
+      </div>
+
+      <!-- DERNIÈRES NOTES -->
+      <div class="section-header">
+        <div class="section-title">Notes récentes</div>
+        <div class="section-link">Voir tout →</div>
+      </div>
+
+      <div class="note-item">
+        <div class="note-subject">
+          <div class="note-name">Mathématiques · Algèbre</div>
+          <div class="note-date">Hier · 8h30</div>
+        </div>
+        <div class="note-grade high">18/20</div>
+        <div class="note-xp xp-earned">+60 XP</div>
+      </div>
+      <div class="note-item">
+        <div class="note-subject">
+          <div class="note-name">Français · Dictée</div>
+          <div class="note-date">Lundi · 14h00</div>
+        </div>
+        <div class="note-grade mid">13/20</div>
+        <div class="note-xp xp-none">+0 XP</div>
+      </div>
+      <div class="note-item">
+        <div class="note-subject">
+          <div class="note-name">Sciences · Contrôle</div>
+          <div class="note-date">Il y a 3 jours</div>
+        </div>
+        <div class="note-grade high">16/20</div>
+        <div class="note-xp xp-earned">+60 XP</div>
+      </div>
+      <div class="note-item">
+        <div class="note-subject">
+          <div class="note-name">Histoire · Exposé</div>
+          <div class="note-date">La semaine dernière</div>
+        </div>
+        <div class="note-grade low">9/20</div>
+        <div class="note-xp xp-none">+0 XP</div>
+      </div>
+
+      <!-- BADGES -->
+      <div class="section-header">
+        <div class="section-title">Badges</div>
+        <div class="section-link">Collection →</div>
+      </div>
+      <div class="badge-grid">
+        <div class="badge-item earned">
+          <div class="badge-icon">🔥</div>
+          <div class="badge-name">5 Semaines</div>
+        </div>
+        <div class="badge-item earned">
+          <div class="badge-icon">⭐</div>
+          <div class="badge-name">Première A+</div>
+        </div>
+        <div class="badge-item earned">
+          <div class="badge-icon">🏆</div>
+          <div class="badge-name">Top 1500 XP</div>
+        </div>
+        <div class="badge-item locked">
+          <div class="badge-icon">🚁</div>
+          <div class="badge-name">Drone Complet</div>
+        </div>
+        <div class="badge-item locked">
+          <div class="badge-icon">💎</div>
+          <div class="badge-name">2000 XP</div>
+        </div>
+        <div class="badge-item locked">
+          <div class="badge-icon">🌙</div>
+          <div class="badge-name">7 Sans Écran</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       SCREEN 2 — BOUTIQUE DRONE
+  ════════════════════════════════════ -->
+  <div id="screen-shop" class="screen">
+    <div class="container">
+      <div class="shop-header">
+        <div class="shop-title">Construis ton Drone</div>
+        <div style="color:var(--muted);font-size:14px;">Chaque pièce coûte 125 XP · 6/10 pièces débloquées</div>
+        <div class="shop-balance">⚡ 1 850 XP disponibles</div>
+
+        <!-- Drone progress -->
+        <div style="max-width:480px;margin:24px auto 0;">
+          <div class="progress-track" style="height:8px;">
+            <div class="progress-fill" style="width:60%;"></div>
+          </div>
+          <div class="progress-label">
+            <span>Assemblage 60% complet</span>
+            <span>750 XP pour la prochaine pièce</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-4">
+
+        <!-- Moteurs brushless -->
+        <div class="part-card unlocked">
+          <div class="part-img">🔧</div>
+          <div class="part-body">
+            <div class="part-name">Moteurs Brushless ×4</div>
+            <div class="part-desc">2306 2450KV · Performance FPV racing</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn owned">✓ Obtenu</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Châssis carbone -->
+        <div class="part-card unlocked">
+          <div class="part-img">🏗️</div>
+          <div class="part-body">
+            <div class="part-name">Châssis Carbone</div>
+            <div class="part-desc">5" true-X · Fibre carbone 3K</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn owned">✓ Obtenu</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESC + FC -->
+        <div class="part-card unlocked">
+          <div class="part-img">⚡</div>
+          <div class="part-body">
+            <div class="part-name">ESC + Flight Controller</div>
+            <div class="part-desc">45A ESC · F7 stack · Betaflight</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn owned">✓ Obtenu</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hélices -->
+        <div class="part-card unlocked">
+          <div class="part-img">🌀</div>
+          <div class="part-body">
+            <div class="part-name">Hélices 5"</div>
+            <div class="part-desc">HQ 5×4.3×3V1S · Tri-blade</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn owned">✓ Obtenu</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batterie -->
+        <div class="part-card unlocked">
+          <div class="part-img">🔋</div>
+          <div class="part-body">
+            <div class="part-name">Batterie LiPo</div>
+            <div class="part-desc">6S 1300mAh · 120C discharge</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn owned">✓ Obtenu</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Récepteur ELRS -->
+        <div class="part-card unlocked">
+          <div class="part-img">📡</div>
+          <div class="part-body">
+            <div class="part-name">Récepteur ELRS</div>
+            <div class="part-desc">ExpressLRS 2.4GHz · Ultra low-latency</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn owned">✓ Obtenu</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GPS -->
+        <div class="part-card" onclick="buyPart(this, 'GPS Module')">
+          <div class="part-img">🛰️</div>
+          <div class="part-body">
+            <div class="part-name">Module GPS</div>
+            <div class="part-desc">BN-220 · Return to home · Position hold</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn can-buy">Débloquer</button>
+            </div>
+            <div class="progress-mini">
+              <div class="progress-track">
+                <div class="progress-fill" style="width:100%;"></div>
+              </div>
+              <div class="progress-label"><span>XP suffisants !</span><span>125 / 125</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chargeur -->
+        <div class="part-card locked">
+          <div class="part-badge-locked">🔒 125 XP</div>
+          <div class="part-img" style="opacity:0.4;">🔌</div>
+          <div class="part-body">
+            <div class="part-name">Chargeur Batterie</div>
+            <div class="part-desc">ISDT Q6 Plus · Balance charging</div>
+            <div class="part-cost">
+              <div class="part-price">125 XP</div>
+              <button class="part-btn need-more">Il manque 0 XP</button>
+            </div>
+            <div class="progress-mini">
+              <div class="progress-track">
+                <div class="progress-fill" style="width:100%;"></div>
+              </div>
+              <div class="progress-label"><span>Prêt à débloquer</span><span>125 / 125</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- OBJETS SPÉCIAUX -->
+      <div class="section-header" style="margin-top:40px;">
+        <div class="section-title">✨ Objets Spéciaux</div>
+        <div class="section-link">Événements →</div>
+      </div>
+      <div class="grid-3">
+
+        <div class="part-card">
+          <div class="part-badge-special">26 AVRIL 2026</div>
+          <div class="part-img">🎮</div>
+          <div class="part-body">
+            <div class="part-name">Radiomaster Pocket</div>
+            <div class="part-desc">Radiocommande compacte ELRS · Hall gimbals</div>
+            <div class="part-cost">
+              <div class="part-price">Spécial</div>
+              <button class="part-btn can-buy" onclick="showToast('🎉 Débloqué aujourd\'hui !')">Débloqué !</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="part-card locked">
+          <div class="part-badge-special">11 JUIN</div>
+          <div class="part-img" style="opacity:0.3;">🥽</div>
+          <div class="part-body">
+            <div class="part-name">DJI Goggles N3</div>
+            <div class="part-desc">O4 video link · 1080p · Ultra low latency</div>
+            <div class="part-cost">
+              <div class="part-price">Spécial</div>
+              <button class="part-btn need-more">Disponible le 11/06</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="part-card locked">
+          <div class="part-badge-special">11 JUIN</div>
+          <div class="part-img" style="opacity:0.3;">📷</div>
+          <div class="part-body">
+            <div class="part-name">DJI Air Unit O4 Pro</div>
+            <div class="part-desc">4K60 · O4 transmission · Digital FPV</div>
+            <div class="part-cost">
+              <div class="part-price">Spécial</div>
+              <button class="part-btn need-more">Disponible le 11/06</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       SCREEN 3 — CHECK-IN HEBDO
+  ════════════════════════════════════ -->
+  <div id="screen-weekly" class="screen">
+    <div class="container">
+      <div class="check-screen">
+        <div class="check-emoji" id="checkEmoji">📔</div>
+        <div class="check-title" id="checkTitle">Check-in du vendredi 🔔</div>
+        <div class="check-sub" id="checkSub">
+          Sois honnête ! Cette déclaration est vérifiable par tes parents.
+          Ta réponse impacte directement ta progression XP.
+        </div>
+        <div class="check-options" id="checkOptions">
+          <button class="check-btn no" onclick="weeklyAnswer(false)">
+            <span>Non, aucun mot dans le carnet</span>
+            <span class="check-btn-xp">+50 XP</span>
+          </button>
+          <button class="check-btn yes" onclick="weeklyAnswer(true)">
+            <span>Oui, j'ai eu un mot</span>
+            <span class="check-btn-xp">+0 XP</span>
+          </button>
+        </div>
+
+        <div style="margin-top:48px;width:100%;max-width:400px;">
+          <div class="divider"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:20px;">
+            <div class="glow-dot"></div>
+            <div style="font-size:12px;color:var(--muted);">Prochain check-in : vendredi 2 mai à 17h00</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+            <div class="streak-dot done">✓</div>
+            <div class="streak-dot done">✓</div>
+            <div class="streak-dot done">✓</div>
+            <div class="streak-dot done">✓</div>
+            <div class="streak-dot today">★</div>
+            <div style="font-size:12px;color:var(--muted);margin-left:6px;line-height:32px;">5 semaines 🔥</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       SCREEN 4 — PARENT DASHBOARD
+  ════════════════════════════════════ -->
+  <div id="screen-parent" class="screen">
+    <div class="container">
+      <div class="parent-header">
+        <div class="parent-badge">👨‍👩‍👦 Interface Parentale · Accès Sécurisé</div>
+        <div class="parent-title">Tableau de bord Parents</div>
+        <div style="color:var(--muted);font-size:14px;">Suivi de Lucas Capel · Dernière sync il y a 4 min</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="grid-4">
+        <div class="card stat-card">
+          <div class="stat-num" style="color:#3d7eff;">1 850</div>
+          <div class="stat-label">XP Total</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-num" style="color:var(--gold);">Niv. 7</div>
+          <div class="stat-label">Niveau actuel</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-num" style="color:var(--green);">5</div>
+          <div class="stat-label">Streak semaines</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-num" style="color:#a78bfa;">6/10</div>
+          <div class="stat-label">Pièces débloquées</div>
+        </div>
+      </div>
+
+      <!-- ACTIONS EN ATTENTE -->
+      <div class="section-header" style="margin-top:28px;">
+        <div class="section-title">⏳ Actions en attente</div>
+        <div style="background:rgba(239,68,68,0.12);color:var(--red);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">2 en attente</div>
+      </div>
+
+      <div class="pending-item">
+        <div>
+          <div class="pending-text">📔 Lucas déclare — pas de mot cette semaine</div>
+          <div class="pending-sub">Vendredi 25 avril · 17h04 · +50 XP si validé</div>
+        </div>
+        <div class="pending-actions">
+          <button class="btn-approve" onclick="approvePending(this, '+50 XP accordés !')">✓ Valider</button>
+          <button class="btn-deny" onclick="denyPending(this, 'Déclaration refusée')">✗ Refuser</button>
+        </div>
+      </div>
+
+      <div class="pending-item">
+        <div>
+          <div class="pending-text">📵 Journée sans écran — samedi</div>
+          <div class="pending-sub">Samedi 19 avril · Auto-déclaré · +5 XP si validé</div>
+        </div>
+        <div class="pending-actions">
+          <button class="btn-approve" onclick="approvePending(this, '+5 XP accordés !')">✓ Valider</button>
+          <button class="btn-deny" onclick="denyPending(this, 'Action refusée')">✗ Refuser</button>
+        </div>
+      </div>
+
+      <!-- PÉNALITÉS -->
+      <div class="section-header">
+        <div class="section-title">⚠️ Ajouter une pénalité</div>
+      </div>
+
+      <div class="grid-2">
+        <button class="penalty-btn" onclick="addPenalty()">
+          ⚠️ Insulte aux parents · −10 XP
+        </button>
+        <button class="penalty-btn" onclick="showToast('🚫 Pénalité personnalisée à venir')">
+          ✏️ Pénalité personnalisée
+        </button>
+      </div>
+
+      <!-- HISTORIQUE XP -->
+      <div class="section-header" style="margin-top:28px;">
+        <div class="section-title">📊 Historique XP (30 jours)</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:4px;align-items:flex-end;height:80px;padding:0 8px;">
+          <!-- Graphique à barres simplifié -->
+          <div style="flex:1;display:flex;align-items:flex-end;gap:4px;height:100%;">
+            <div style="flex:1;background:rgba(61,126,255,0.25);border-radius:4px 4px 0 0;height:40%;"></div>
+            <div style="flex:1;background:rgba(61,126,255,0.35);border-radius:4px 4px 0 0;height:65%;"></div>
+            <div style="flex:1;background:rgba(61,126,255,0.4);border-radius:4px 4px 0 0;height:50%;"></div>
+            <div style="flex:1;background:rgba(61,126,255,0.5);border-radius:4px 4px 0 0;height:80%;"></div>
+            <div style="flex:1;background:rgba(61,126,255,0.35);border-radius:4px 4px 0 0;height:45%;"></div>
+            <div style="flex:1;background:rgba(61,126,255,0.6);border-radius:4px 4px 0 0;height:90%;"></div>
+            <div style="flex:1;background:linear-gradient(180deg,#3d7eff,#7c3aed);border-radius:4px 4px 0 0;height:100%;box-shadow:0 0 12px rgba(61,126,255,0.5);"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);padding:8px 8px 0;border-top:1px solid rgba(255,255,255,0.04);margin-top:8px;">
+          <span>S1</span><span>S2</span><span>S3</span><span>S4</span><span>S5</span><span>S6</span><span>Cette semaine</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:12px;">Meilleure semaine : <strong style="color:var(--text);">170 XP</strong> · Moyenne : <strong style="color:var(--text);">92 XP/sem.</strong></div>
+      </div>
+
+      <!-- NOTES RÉCENTES PARENTS -->
+      <div class="section-header">
+        <div class="section-title">📚 Notes ÉcoleDirecte · Sync auto</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="glow-dot"></div>
+          <div style="font-size:11px;color:var(--muted);">En direct</div>
+        </div>
+      </div>
+
+      <div class="note-item">
+        <div class="note-subject">
+          <div class="note-name">Mathématiques · Algèbre</div>
+          <div class="note-date">Hier · Coeff. 3</div>
+        </div>
+        <div class="note-grade high">18/20</div>
+        <div class="note-xp xp-earned">+60 XP</div>
+      </div>
+      <div class="note-item">
+        <div class="note-subject">
+          <div class="note-name">Français · Dictée</div>
+          <div class="note-date">Lundi · Coeff. 2</div>
+        </div>
+        <div class="note-grade mid">13/20</div>
+        <div class="note-xp xp-none">+0 XP</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       SCREEN 5 — ARCHITECTURE TECHNIQUE
+  ════════════════════════════════════ -->
+  <div id="screen-archi" class="screen">
+    <div class="container" style="padding-top:24px;">
+
+      <div style="margin-bottom:32px;">
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;">Architecture Technique</div>
+        <div class="section-intro">
+          Stack complète pour une app gamifiée sécurisée, performante et maintenable.
+          Pensée pour un développeur solo avec des coûts d'infrastructure minimaux.
+        </div>
+        <div>
+          <span class="tag">React Native</span>
+          <span class="tag">Expo</span>
+          <span class="tag">Node.js</span>
+          <span class="tag">PostgreSQL</span>
+          <span class="tag">Firebase</span>
+          <span class="tag">ÉcoleDirecte API</span>
+          <span class="tag">Cron Jobs</span>
+        </div>
+      </div>
+
+      <!-- FRONTEND MOBILE -->
+      <div class="arch-section">
+        <div class="arch-title">📱 Frontend Mobile</div>
+        <div class="arch-card">
+          <div class="tech-item">
+            <div class="tech-icon">⚛️</div>
+            <div>
+              <div class="tech-name">React Native + Expo</div>
+              <div class="tech-desc">Cross-platform iOS/Android depuis une seule codebase. Expo EAS Build pour les binaires. Expo Router pour la navigation file-based.</div>
+              <span class="tech-tag">iOS</span><span class="tech-tag">Android</span><span class="tech-tag">OTA Updates</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">🎨</div>
+            <div>
+              <div class="tech-name">Animations — Reanimated 3 + Lottie</div>
+              <div class="tech-desc">Barre XP animée avec spring physics, confettis au déblocage d'une pièce, transitions de screens fluides. Lottie pour les animations complexes (confettis, trophées).</div>
+              <span class="tech-tag">60fps</span><span class="tech-tag">Native Driver</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">🔔</div>
+            <div>
+              <div class="tech-name">Notifications Push — Expo Notifications</div>
+              <div class="tech-desc">Notification vendredi 17h via cron job backend → push via Expo Push API → notification locale ou FCM/APNs. Tokens stockés en base.</div>
+              <span class="tech-tag">FCM</span><span class="tech-tag">APNs</span><span class="tech-tag">Cron</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">💾</div>
+            <div>
+              <div class="tech-name">Stockage local — MMKV + Zustand</div>
+              <div class="tech-desc">MMKV pour le cache rapide des données (notes, XP). Zustand pour le state global. Pas de données sensibles stockées en clair côté app.</div>
+              <span class="tech-tag">Sécurisé</span><span class="tech-tag">Rapide</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BACKEND -->
+      <div class="arch-section">
+        <div class="arch-title">🖥️ Backend API</div>
+        <div class="arch-card">
+          <div class="tech-item">
+            <div class="tech-icon">🟢</div>
+            <div>
+              <div class="tech-name">Node.js + Fastify (ou NestJS)</div>
+              <div class="tech-desc">API REST avec authentification JWT. Fastify pour les performances. Routes : /auth, /xp, /notes, /shop, /parent. Hébergement Railway ou Render (free tier suffisant).</div>
+              <span class="tech-tag">REST API</span><span class="tech-tag">JWT</span><span class="tech-tag">Railway</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">🗄️</div>
+            <div>
+              <div class="tech-name">PostgreSQL + Prisma ORM</div>
+              <div class="tech-desc">Tables : users (enfant + parents), xp_events (log immuable de chaque gain/perte), weekly_checks, drone_parts, notes_cache. Supabase pour PostgreSQL gratuit + auth intégrée.</div>
+              <span class="tech-tag">PostgreSQL</span><span class="tech-tag">Prisma</span><span class="tech-tag">Supabase</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">⏰</div>
+            <div>
+              <div class="tech-name">Cron Jobs — node-cron</div>
+              <div class="tech-desc">
+                <strong>Chaque heure :</strong> scraping ÉcoleDirecte → mise à jour des notes → calcul XP automatique.<br>
+                <strong>Vendredi 17h :</strong> envoi notification push check-in hebdomadaire.<br>
+                <strong>Minuit :</strong> calcul des streaks, mise à jour des niveaux.
+              </div>
+              <span class="tech-tag">Cron</span><span class="tech-tag">Automatique</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉCOLEDIRECTE -->
+      <div class="arch-section">
+        <div class="arch-title">🏫 Intégration ÉcoleDirecte</div>
+        <div class="arch-card">
+          <div class="tech-item">
+            <div class="tech-icon">🔐</div>
+            <div>
+              <div class="tech-name">Authentification & Sécurité des identifiants</div>
+              <div class="tech-desc">
+                Les credentials ÉcoleDirecte ne sont JAMAIS stockés en clair.<br>
+                → Chiffrement AES-256-GCM côté backend avant stockage en base.<br>
+                → Clé de chiffrement = variable d'environnement (non versionnée).<br>
+                → L'app mobile ne reçoit JAMAIS les credentials, seulement des tokens JWT courts (15 min).<br>
+                → Session ÉcoleDirecte stockée en mémoire Redis (TTL 1h).
+              </div>
+              <span class="tech-tag">AES-256</span><span class="tech-tag">Env Vars</span><span class="tech-tag">Redis</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">📡</div>
+            <div>
+              <div class="tech-name">Méthode de récupération des notes</div>
+              <div class="tech-desc">
+                Option A (recommandée) : utiliser l'API non-officielle ÉcoleDirecte (endpoints JSON documentés par la communauté).<br>
+                Librairie npm : <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">ecoledirecte.js</code> ou équivalent.<br>
+                Option B : Puppeteer headless browser si l'API change (fallback).<br>
+                Les notes sont normalisées en /20 avant stockage.
+              </div>
+              <span class="tech-tag">API JSON</span><span class="tech-tag">Fallback Puppeteer</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SÉCURITÉ -->
+      <div class="arch-section">
+        <div class="arch-title">🛡️ Sécurité & Authentification</div>
+        <div class="arch-card">
+          <div class="tech-item">
+            <div class="tech-icon">👤</div>
+            <div>
+              <div class="tech-name">Deux comptes distincts</div>
+              <div class="tech-desc">
+                <strong>Compte Enfant</strong> : accès app mobile, lecture de ses XP, actions auto-déclarées.<br>
+                <strong>Compte Parent</strong> : dashboard web React (Vite), validation/refus des actions, ajout de pénalités, lecture totale.
+              </div>
+              <span class="tech-tag">RBAC</span><span class="tech-tag">Rôles</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">🔑</div>
+            <div>
+              <div class="tech-name">Auth — JWT + Refresh Token</div>
+              <div class="tech-desc">Access token 15 min, refresh token 30 jours stocké en HttpOnly cookie. PIN de 6 chiffres pour l'accès parent (2FA optionnel). Aucun mot de passe stocké en clair (bcrypt).</div>
+              <span class="tech-tag">JWT</span><span class="tech-tag">HttpOnly</span><span class="tech-tag">bcrypt</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMAGES DYNAMIQUES -->
+      <div class="arch-section">
+        <div class="arch-title">🖼️ Images dynamiques des pièces</div>
+        <div class="arch-card">
+          <div class="tech-item">
+            <div class="tech-icon">📁</div>
+            <div>
+              <div class="tech-name">Structure des assets</div>
+              <div class="tech-desc">
+                Les images sont dans <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">/assets/drone_parts/</code> dans le repo React Native.<br>
+                Chaque pièce a un ID dans la base de données qui correspond au nom du fichier.<br>
+                Ex : <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">part_motors.png</code>, <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">part_frame.png</code>...<br>
+                Les images locked sont affichées avec un filtre grayscale + opacité réduite.
+              </div>
+              <span class="tech-tag">Assets locaux</span><span class="tech-tag">Dynamic require()</span>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">☁️</div>
+            <div>
+              <div class="tech-name">Alternative GitHub CDN</div>
+              <div class="tech-desc">
+                Si les images doivent être mises à jour sans rebuild de l'app :<br>
+                → Héberger sur GitHub Pages (<code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">raw.githubusercontent.com/user/repo/main/parts/</code>)<br>
+                → L'app récupère les URLs depuis l'API backend.<br>
+                → Cache local avec expo-image (LRU cache).
+              </div>
+              <span class="tech-tag">GitHub CDN</span><span class="tech-tag">expo-image</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AMÉLIORATIONS -->
+      <div class="arch-section">
+        <div class="arch-title">🚀 Idées d'améliorations</div>
+        <div class="arch-card">
+          <div class="tech-item">
+            <div class="tech-icon">🤖</div>
+            <div>
+              <div class="tech-name">Coach IA intégré</div>
+              <div class="tech-desc">Conseil personnalisé basé sur les notes : "Tu as eu 9/20 en Histoire, voici 3 ressources pour t'améliorer." Via Claude API ou OpenAI.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">👥</div>
+            <div>
+              <div class="tech-name">Mode multi-enfants</div>
+              <div class="tech-desc">Dashboard parent gérant plusieurs profils enfants avec classement interne (pour familles nombreuses ou entre amis).</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">🏆</div>
+            <div>
+              <div class="tech-name">Défis hebdomadaires</div>
+              <div class="tech-desc">Objectif de la semaine généré automatiquement : "Avoir 2 notes > 15 cette semaine" = bonus +30 XP. Reset chaque lundi.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">📈</div>
+            <div>
+              <div class="tech-name">Prédiction de fin de trimestre</div>
+              <div class="tech-desc">Calcul de la moyenne prévisionnelle par matière basé sur les notes actuelles + projection XP jusqu'à la fin du trimestre.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">🎯</div>
+            <div>
+              <div class="tech-name">Objectifs personnalisés</div>
+              <div class="tech-desc">Les parents peuvent créer des objectifs sur mesure : "Dépasse 16/20 en Sciences = +100 XP bonus" avec date d'échéance.</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon">🌙</div>
+            <div>
+              <div class="tech-name">Widget iOS/Android</div>
+              <div class="tech-desc">Widget écran d'accueil affichant XP actuel, streak, et prochaine pièce à débloquer. Via Expo Widgets ou react-native-widget-extension.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STACK RÉSUMÉ -->
+      <div class="card" style="margin-bottom:40px;background:linear-gradient(135deg,rgba(61,126,255,0.08),rgba(124,58,237,0.06));border-color:rgba(61,126,255,0.2);">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;">📦 Stack complète résumée</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+          <div><span style="color:var(--muted);">Mobile App</span><br><strong>React Native + Expo</strong></div>
+          <div><span style="color:var(--muted);">Dashboard Parents</span><br><strong>React + Vite (web)</strong></div>
+          <div><span style="color:var(--muted);">Backend</span><br><strong>Node.js + Fastify</strong></div>
+          <div><span style="color:var(--muted);">Base de données</span><br><strong>PostgreSQL (Supabase)</strong></div>
+          <div><span style="color:var(--muted);">Cache / Sessions</span><br><strong>Redis (Upstash)</strong></div>
+          <div><span style="color:var(--muted);">Push Notifications</span><br><strong>Expo Push + FCM/APNs</strong></div>
+          <div><span style="color:var(--muted);">Hébergement backend</span><br><strong>Railway (gratuit)</strong></div>
+          <div><span style="color:var(--muted);">Chiffrement identifiants</span><br><strong>AES-256-GCM + .env</strong></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toastMsg">Message</span>
+</div>
+
+<script>
+  // ── TAB SWITCHING ──
+  function switchTab(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── CONFETTI ──
+  function spawnConfetti() {
+    const colors = ['#3d7eff','#7c3aed','#f5a623','#22c55e','#ec4899','#fff'];
+    for (let i = 0; i < 60; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.cssText = `
+        left: ${Math.random()*100}vw;
+        top: ${Math.random()*40}vh;
+        background: ${colors[Math.floor(Math.random()*colors.length)]};
+        animation-delay: ${Math.random()*1}s;
+        animation-duration: ${1.5 + Math.random()*1.5}s;
+        width: ${6 + Math.random()*8}px;
+        height: ${6 + Math.random()*8}px;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      `;
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 3000);
+    }
+  }
+
+  // ── ADD XP ──
+  let currentXP = 1850;
+  function addXP(amount, msg) {
+    currentXP += amount;
+    spawnConfetti();
+    showToast(msg + ' → ' + currentXP + ' XP total');
+    const pct = Math.min(((currentXP - 1750) / 250) * 100, 100);
+    document.getElementById('xpFill').style.width = pct + '%';
+  }
+
+  // ── BUY PART ──
+  function buyPart(card, name) {
+    spawnConfetti();
+    showToast('🚁 ' + name + ' débloqué ! −125 XP');
+    card.classList.add('unlocked');
+    card.classList.remove('locked');
+    const btn = card.querySelector('.part-btn');
+    if (btn) { btn.className = 'part-btn owned'; btn.textContent = '✓ Obtenu'; }
+  }
+
+  // ── WEEKLY CHECK ──
+  function weeklyAnswer(hadMot) {
+    const emoji = document.getElementById('checkEmoji');
+    const title = document.getElementById('checkTitle');
+    const sub = document.getElementById('checkSub');
+    const opts = document.getElementById('checkOptions');
+
+    if (!hadMot) {
+      emoji.textContent = '🎉';
+      title.textContent = 'Excellent ! +50 XP gagnés';
+      sub.textContent = 'Ta déclaration a été enregistrée. Tes parents seront notifiés pour validation. Continue comme ça !';
+      opts.innerHTML = '<div style="display:flex;align-items:center;gap:12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:18px 24px;"><span style="font-size:28px;">✅</span><div><div style="font-weight:600;color:#4ade80;">Déclaration soumise</div><div style="font-size:12px;color:var(--muted);margin-top:4px;">En attente de validation parentale</div></div></div>';
+      spawnConfetti();
+      showToast('🎉 +50 XP soumis — validation en cours');
+    } else {
+      emoji.textContent = '📝';
+      title.textContent = 'D\'accord, noté.';
+      sub.textContent = 'Aucun XP cette semaine pour le check-in. Mais il reste des opportunités via tes notes ! Courage pour la semaine prochaine.';
+      opts.innerHTML = '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:18px 24px;color:var(--muted);font-size:14px;">Prochain check-in vendredi à 17h · Ne lâche pas ! 💪</div>';
+    }
+  }
+
+  // ── PARENT ACTIONS ──
+  function approvePending(btn, msg) {
+    const item = btn.closest('.pending-item');
+    item.style.transition = 'all 0.4s';
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(20px)';
+    setTimeout(() => item.remove(), 400);
+    spawnConfetti();
+    showToast('✅ ' + msg);
+  }
+
+  function denyPending(btn, msg) {
+    const item = btn.closest('.pending-item');
+    item.style.transition = 'all 0.4s';
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(-20px)';
+    setTimeout(() => item.remove(), 400);
+    showToast('❌ ' + msg);
+  }
+
+  function addPenalty() {
+    showToast('⚠️ Pénalité appliquée · −10 XP');
+    currentXP = Math.max(0, currentXP - 10);
+  }
+
+  // ── ANIMATE XP BAR ON LOAD ──
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('xpFill').style.width = '92.5%';
+    }, 300);
+  });
+</script>
+</body>
+</html>
