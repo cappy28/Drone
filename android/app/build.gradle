@@ -1,28 +1,23 @@
-plugins {
-    id 'com.android.application'
-}
+apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.dronexp.app'
-    compileSdk 34
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.dronexp.app"
-        minSdk 24
-        targetSdk 34
+        minSdkVersion 24
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
     }
 
     buildTypes {
-        release {
-            minifyEnabled false
-        }
+        release { minifyEnabled false }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 
