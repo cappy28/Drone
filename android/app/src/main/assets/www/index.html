@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DroneXP</title>
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080a0f;--surf:rgba(255,255,255,0.04);--brd:rgba(255,255,255,0.08);
+  --acc:#3d7eff;--pur:#7c3aed;--gold:#f5a623;--grn:#22c55e;--red:#ef4444;
+  --txt:#f0f2f8;--mut:rgba(240,242,248,0.45);
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh}
+/* SCREENS */
+.scr{display:none;flex:1;overflow-y:auto;padding:0 0 80px;-webkit-overflow-scrolling:touch}
+.scr.on{display:block}
+/* NAV */
+#nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(8,10,15,0.97);border-top:1px solid var(--brd);display:flex;align-items:center;justify-content:space-around;backdrop-filter:blur(20px);z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nb{display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:none;color:var(--mut);font-size:10px;font-weight:500;padding:8px 16px;cursor:pointer;transition:color .2s}
+.nb svg{width:22px;height:22px}
+.nb.on{color:var(--acc)}
+/* CARDS */
+.card{background:var(--surf);border:1px solid var(--brd);border-radius:18px;padding:20px;margin:0 16px 12px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top left,rgba(61,126,255,0.04),transparent 60%);pointer-events:none}
+/* SETUP SCREEN */
+#setup{background:var(--bg);position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+.setup-emoji{font-size:72px;margin-bottom:24px;animation:flt 3s ease-in-out infinite}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.setup-title{font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.setup-sub{font-size:14px;color:var(--mut);margin-bottom:32px;line-height:1.6}
+.inp{width:100%;padding:16px;background:rgba(255,255,255,0.06);border:1px solid var(--brd);border-radius:14px;color:var(--txt);font-size:16px;outline:none;margin-bottom:12px;transition:border-color .2s}
+.inp:focus{border-color:var(--acc)}
+.inp::placeholder{color:var(--mut)}
+.btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--acc),var(--pur));border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:8px}
+.btn:active{opacity:.85}
+.hint{font-size:11px;color:var(--mut);margin-top:16px;line-height:1.6}
+/* HEADER */
+.hdr{padding:20px 16px 4px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:linear-gradient(180deg,var(--bg) 80%,transparent);z-index:50}
+.hdr-title{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.hdr-xp{font-size:13px;font-weight:700;color:var(--gold);background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.2);border-radius:999px;padding:4px 12px}
+/* XP CARD */
+.xp-card{background:linear-gradient(135deg,rgba(61,126,255,0.12),rgba(124,58,237,0.1));border-color:rgba(61,126,255,0.2)}
+.xp-name{font-size:15px;color:var(--mut);margin-bottom:4px}
+.xp-total{font-size:52px;font-weight:900;letter-spacing:-2px;line-height:1;background:linear-gradient(135deg,#fff,rgba(255,255,255,0.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.xp-unit{font-size:22px}
+.lv-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.25);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--gold);margin:8px 0 16px}
+.bar-track{height:10px;background:rgba(255,255,255,0.07);border-radius:999px;overflow:hidden;position:relative}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--pur),#ec4899);background-size:200%;animation:sh 3s linear infinite;border-radius:999px;transition:width 1s cubic-bezier(.4,0,.2,1);position:relative}
+.bar-fill::after{content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:14px;height:14px;background:#fff;border-radius:50%;box-shadow:0 0 10px rgba(168,85,247,.8)}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.bar-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin:6px 0 2px}
+/* STREAK */
+.streak-row{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.s-dot{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:12px}
+.s-dot.done{background:rgba(61,126,255,0.2);border-color:rgba(61,126,255,0.4)}
+.s-dot.cur{background:linear-gradient(135deg,var(--acc),var(--pur));border-color:transparent;box-shadow:0 0 12px rgba(61,126,255,.4)}
+/* SECTION */
+.sec{padding:16px 16px 4px;font-size:16px;font-weight:700;letter-spacing:-.3px}
+/* ACTION CARDS */
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
+.act{padding:16px;border-radius:16px;border:1px solid var(--brd);background:var(--surf);position:relative;overflow:hidden}
+.act-icon{font-size:26px;margin-bottom:8px}
+.act-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.act-desc{font-size:11px;color:var(--mut);line-height:1.4}
+.act-xp{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
+.act.g{border-color:rgba(34,197,94,.2)}.act.g .act-xp{background:rgba(34,197,94,.12);color:var(--grn)}
+.act.b{border-color:rgba(61,126,255,.2)}.act.b .act-xp{background:rgba(61,126,255,.12);color:var(--acc)}
+.act.r{border-color:rgba(239,68,68,.2)}.act.r .act-xp{background:rgba(239,68,68,.12);color:var(--red)}
+/* RECENT LOG */
+.log-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.log-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.log-txt{flex:1;font-size:13px;font-weight:500}
+.log-sub{font-size:11px;color:var(--mut);margin-top:2px}
+.log-xp{font-size:13px;font-weight:700}
+.log-xp.p{color:var(--grn)}.log-xp.n{color:var(--red)}
+/* SHOP */
+.parts{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px}
+.part{border-radius:16px;border:1px solid var(--brd);background:var(--surf);overflow:hidden;transition:transform .2s}
+.part:active{transform:scale(.97)}
+.part-img{height:100px;display:flex;align-items:center;justify-content:center;font-size:48px;background:radial-gradient(ellipse at center,rgba(61,126,255,0.08),transparent)}
+.part-body{padding:12px}
+.part-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.part-desc{font-size:10px;color:var(--mut);margin-bottom:10px;line-height:1.4}
+.part-cost{display:flex;align-items:center;justify-content:space-between}
+.part-price{font-size:13px;font-weight:700;color:var(--gold)}
+.pbtn{padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:all .2s}
+.pbtn.buy{background:linear-gradient(135deg,var(--acc),var(--pur));color:#fff}
+.pbtn.own{background:rgba(34,197,94,.12);color:var(--grn)}
+.pbtn.lock{background:rgba(255,255,255,.06);color:var(--mut)}
+.part.owned{border-color:rgba(34,197,94,.25)}
+.part.locked{opacity:.6}
+.part-special-badge{position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.5px}
+.shop-bal{text-align:center;padding:8px;margin:8px 16px 16px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:14px;font-weight:700;color:var(--gold);font-size:15px}
+.drone-progress{margin:0 16px 8px;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:14px}
+.dp-label{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-bottom:6px}
+.dp-track{height:6px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden}
+.dp-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--pur));border-radius:999px;transition:width 1s ease}
+/* WEEKLY */
+.weekly-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;padding:32px 24px;text-align:center}
+.w-emoji{font-size:64px;margin-bottom:20px;animation:flt 3s ease-in-out infinite}
+.w-title{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+.w-sub{font-size:13px;color:var(--mut);line-height:1.6;margin-bottom:32px;max-width:300px}
+.w-opts{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
+.wbtn{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-radius:14px;font-size:15px;font-weight:700;border:none;cursor:pointer;transition:all .2s}
+.wbtn:active{transform:scale(.97)}
+.wbtn.no{background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(34,197,94,.08));color:var(--grn);border:1px solid rgba(34,197,94,.25)}
+.wbtn.yes{background:var(--surf);color:var(--mut);border:1px solid var(--brd)}
+.wbtn-xp{background:rgba(255,255,255,.1);border-radius:8px;padding:3px 10px;font-size:12px}
+.w-done{padding:20px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:16px;color:var(--grn);font-weight:600;margin:0 16px;text-align:center}
+.next-check{margin:20px 16px 0;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:14px;font-size:12px;color:var(--mut)}
+/* BADGES */
+.badges{display:flex;gap:10px;padding:0 16px;flex-wrap:wrap}
+.badge{padding:10px 12px;background:var(--surf);border:1px solid var(--brd);border-radius:12px;text-align:center;min-width:70px}
+.badge.earned{background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,.25)}
+.badge.locked{opacity:.4;filter:grayscale(.9)}
+.badge-ico{font-size:24px;margin-bottom:4px}
+.badge-lbl{font-size:9px;color:var(--mut);font-weight:500}
+/* TOAST */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(15,20,30,.97);backdrop-filter:blur(20px);border:1px solid rgba(61,126,255,.3);border-radius:14px;padding:12px 20px;font-size:13px;font-weight:500;z-index:999;transition:transform .35s cubic-bezier(.4,0,.2,1);white-space:nowrap;display:flex;align-items:center;gap:8px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.confetti-p{position:fixed;pointer-events:none;z-index:9999;border-radius:2px;animation:cfall var(--d,1.5s) ease-in forwards}
+@keyframes cfall{0%{opacity:1;transform:translateY(-10px) rotate(0)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
+/* SYNC STATUS */
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);animation:blk 1.5s ease-in-out infinite;display:inline-block;margin-right:5px}
+.sync-dot.off{background:var(--mut);box-shadow:none;animation:none}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+<div id="app">
+<!-- SETUP -->
+<div id="setup">
+  <div class="setup-emoji">🚁</div>
+  <div class="setup-title">Bienvenue sur DroneXP</div>
+  <div class="setup-sub">Gagne des XP à l'école pour<br>construire ton drone pièce par pièce !</div>
+  <input class="inp" id="setupName" placeholder="Ton prénom" maxlength="20"/>
+  <input class="inp" id="setupCode" placeholder="Code famille (ex: LUCAS2024)" maxlength="20" style="text-transform:uppercase"/>
+  <button class="btn" onclick="doSetup()">Commencer !</button>
+  <div class="hint">Le code famille est fourni par tes parents.<br>Utilise le même sur le site des parents.</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="scr-home" class="scr">
+  <div class="hdr">
+    <div class="hdr-title" id="hdrName">DroneXP</div>
+    <div class="hdr-xp" id="hdrXP">0 XP</div>
+  </div>
+  <!-- XP Card -->
+  <div class="card xp-card">
+    <div class="xp-name" id="dashName">Lucas</div>
+    <div class="xp-total" id="dashXP">0 <span class="xp-unit">XP</span></div>
+    <div class="lv-badge" id="dashLv">⚡ Niveau 1 — Débutant</div>
+    <div class="bar-lbl"><span id="barLblL">0 XP</span><span id="barLblR">Niv.2 — 200 XP</span></div>
+    <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+    <div style="margin-top:14px;font-size:11px;color:var(--mut);letter-spacing:.5px;text-transform:uppercase">🔥 Streak hebdomadaire</div>
+    <div class="streak-row" id="streakRow"></div>
+  </div>
+  <!-- Actions rapides -->
+  <div class="sec">Actions XP</div>
+  <div class="acts">
+    <div class="act g">
+      <div class="act-xp">+50 XP</div>
+      <div class="act-icon">📔</div>
+      <div class="act-name">Pas de mot</div>
+      <div class="act-desc">Déclaré chaque vendredi à 17h</div>
+    </div>
+    <div class="act b">
+      <div class="act-xp">+60 XP</div>
+      <div class="act-icon">⭐</div>
+      <div class="act-name">Note ≥ 15/20</div>
+      <div class="act-desc">Sync ÉcoleDirecte auto</div>
+    </div>
+    <div class="act g" onclick="declareNoScreen()">
+      <div class="act-xp">+5 XP</div>
+      <div class="act-icon">📵</div>
+      <div class="act-name">Sans écran</div>
+      <div class="act-desc">Appuie pour déclarer</div>
+    </div>
+    <div class="act r">
+      <div class="act-xp">−10 XP</div>
+      <div class="act-icon">⚠️</div>
+      <div class="act-name">Pénalité</div>
+      <div class="act-desc">Ajoutée par les parents</div>
+    </div>
+  </div>
+  <!-- Log -->
+  <div class="sec">Historique récent</div>
+  <div class="card" style="padding:0">
+    <div id="logList"></div>
+  </div>
+  <!-- Badges -->
+  <div class="sec">Badges</div>
+  <div class="badges" id="badgeRow"></div>
+  <!-- Sync status -->
+  <div style="text-align:center;padding:16px;font-size:11px;color:var(--mut)">
+    <span class="sync-dot" id="syncDot"></span><span id="syncTxt">Connexion...</span>
+  </div>
+</div>
+
+<!-- SHOP -->
+<div id="scr-shop" class="scr">
+  <div class="hdr">
+    <div class="hdr-title">🚁 Boutique Drone</div>
+    <div class="hdr-xp" id="shopXP">0 XP</div>
+  </div>
+  <div class="shop-bal" id="shopBal">⚡ 0 XP disponibles</div>
+  <div class="drone-progress">
+    <div class="dp-label"><span id="dpTxt">0 / 10 pièces débloquées</span><span id="dpPct">0%</span></div>
+    <div class="dp-track"><div class="dp-fill" id="dpFill" style="width:0%"></div></div>
+  </div>
+  <div class="parts" id="partsList"></div>
+</div>
+
+<!-- WEEKLY -->
+<div id="scr-weekly" class="scr">
+  <div class="hdr"><div class="hdr-title">Check-in</div></div>
+  <div class="weekly-wrap" id="weeklyContent">
+    <div class="w-emoji">📔</div>
+    <div class="w-title">Check-in du vendredi</div>
+    <div class="w-sub">Sois honnête ! Tes parents peuvent vérifier. Ta réponse est enregistrée.</div>
+    <div class="w-opts">
+      <button class="wbtn no" onclick="weeklyAnswer(false)">
+        <span>Non, aucun mot</span>
+        <span class="wbtn-xp">+50 XP</span>
+      </button>
+      <button class="wbtn yes" onclick="weeklyAnswer(true)">
+        <span>Oui, j'ai eu un mot</span>
+        <span class="wbtn-xp">+0 XP</span>
+      </button>
+    </div>
+  </div>
+  <div class="next-check" id="nextCheck" style="display:none"></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nb on" onclick="goto('home', this)" id="nb-home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Accueil
+  </button>
+  <button class="nb" onclick="goto('shop', this)" id="nb-shop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    Drone
+  </button>
+  <button class="nb" onclick="goto('weekly', this)" id="nb-weekly">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Vendredi
+  </button>
+</nav>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const PARTS = [
+  {id:'motors',    icon:'🔧', name:'Moteurs Brushless ×4', desc:'2306 2450KV · FPV racing', special:false, date:null},
+  {id:'frame',     icon:'🏗️', name:'Châssis Carbone',      desc:'5" true-X · 3K carbon',   special:false, date:null},
+  {id:'esc',       icon:'⚡', name:'ESC + Flight Controller', desc:'45A · F7 · Betaflight', special:false, date:null},
+  {id:'props',     icon:'🌀', name:'Hélices 5"',            desc:'HQ 5×4.3×3 · Tri-blade', special:false, date:null},
+  {id:'battery',   icon:'🔋', name:'Batterie LiPo',         desc:'6S 1300mAh · 120C',       special:false, date:null},
+  {id:'elrs',      icon:'📡', name:'Récepteur ELRS',        desc:'2.4GHz · Ultra low-lat',  special:false, date:null},
+  {id:'gps',       icon:'🛰️', name:'Module GPS',            desc:'BN-220 · RTH · Hold',     special:false, date:null},
+  {id:'charger',   icon:'🔌', name:'Chargeur Batterie',     desc:'ISDT Q6 Plus · Balance',  special:false, date:null},
+  {id:'pocket',    icon:'🎮', name:'Radiomaster Pocket',    desc:'ELRS · Hall gimbals',     special:true,  date:'2026-04-26'},
+  {id:'goggles',   icon:'🥽', name:'DJI Goggles N3',        desc:'O4 · 1080p · Low-lat',    special:true,  date:'2026-06-11'},
+  {id:'airunit',   icon:'📷', name:'DJI Air Unit O4 Pro',   desc:'4K60 · O4 transmission',  special:true,  date:'2026-06-11'},
+];
+const LEVELS = [
+  {n:1,xp:0,    title:'Débutant'},
+  {n:2,xp:200,  title:'Apprenti'},
+  {n:3,xp:500,  title:'Pilote'},
+  {n:4,xp:900,  title:'Pilote+'},
+  {n:5,xp:1400, title:'Confirmé'},
+  {n:6,xp:2000, title:'Expert'},
+  {n:7,xp:2700, title:'Ace'},
+  {n:8,xp:3500, title:'Elite'},
+  {n:9,xp:4500, title:'Champion'},
+  {n:10,xp:6000,title:'Légende'},
+];
+const BADGES_DEF = [
+  {id:'b_first',   ico:'🚀', name:'Premier XP',  fn:s=>s.xp>0},
+  {id:'b_500',     ico:'💫', name:'500 XP',       fn:s=>s.xp>=500},
+  {id:'b_1000',    ico:'⭐', name:'1000 XP',      fn:s=>s.xp>=1000},
+  {id:'b_streak3', ico:'🔥', name:'3 Semaines',   fn:s=>s.streak>=3},
+  {id:'b_streak5', ico:'🌟', name:'5 Semaines',   fn:s=>s.streak>=5},
+  {id:'b_part3',   ico:'🔧', name:'3 Pièces',     fn:(s,p)=>Object.values(p).filter(Boolean).length>=3},
+  {id:'b_part5',   ico:'🏆', name:'5 Pièces',     fn:(s,p)=>Object.values(p).filter(Boolean).length>=5},
+  {id:'b_drone',   ico:'🚁', name:'Drone Complet',fn:(s,p)=>Object.values(p).filter(Boolean).length>=8},
+];
+
+let S = { name:'', familyCode:'', xp:0, streak:0, log:[], parts:{}, weeklyDone:false, weeklyWeek:-1 };
+let db = null;
+let useFirebase = false;
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+window.onload = function() {
+  const saved = localStorage.getItem('droneXP_state');
+  if (saved) {
+    S = JSON.parse(saved);
+    document.getElementById('setup').style.display = 'none';
+    initFirebase();
+    render();
+  }
+};
+
+function doSetup() {
+  const name = document.getElementById('setupName').value.trim();
+  const code = document.getElementById('setupCode').value.trim().toUpperCase();
+  if (!name) { toast('⚠️ Entre ton prénom'); return; }
+  if (!code) { toast('⚠️ Entre le code famille'); return; }
+  S.name = name; S.familyCode = code;
+  save();
+  document.getElementById('setup').style.display = 'none';
+  initFirebase();
+  render();
+}
+
+function initFirebase() {
+  try {
+    if (typeof FIREBASE_CONFIG === 'undefined' || FIREBASE_CONFIG.apiKey === 'REMPLACE_MOI') {
+      setSyncStatus(false, 'Mode local (sans Firebase)');
+      return;
+    }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    useFirebase = true;
+    setSyncStatus(true, 'Connecté');
+    listenFirebase();
+  } catch(e) { setSyncStatus(false, 'Mode local'); }
+}
+
+function setSyncStatus(ok, txt) {
+  const d = document.getElementById('syncDot');
+  if(d) { d.className = 'sync-dot' + (ok ? '' : ' off'); }
+  const t = document.getElementById('syncTxt');
+  if(t) t.textContent = txt;
+}
+
+function listenFirebase() {
+  if (!db || !S.familyCode) return;
+  const ref = db.ref('families/' + S.familyCode + '/child');
+  ref.on('value', snap => {
+    const d = snap.val();
+    if (d) {
+      S.xp = d.xp || 0;
+      S.streak = d.streak || 0;
+      S.log = d.log || [];
+      S.parts = d.parts || {};
+      S.weeklyDone = d.weeklyDone || false;
+      S.weeklyWeek = d.weeklyWeek || -1;
+      save();
+      render();
+    } else {
+      pushToFirebase();
+    }
+  });
+}
+
+function pushToFirebase() {
+  if (!db || !S.familyCode) return;
+  db.ref('families/' + S.familyCode + '/child').set({
+    name: S.name, xp: S.xp, streak: S.streak,
+    log: S.log.slice(-50), parts: S.parts,
+    weeklyDone: S.weeklyDone, weeklyWeek: S.weeklyWeek,
+    updatedAt: Date.now()
+  }).catch(()=>{});
+}
+
+function save() {
+  localStorage.setItem('droneXP_state', JSON.stringify(S));
+}
+
+// ══════════════════════════════════════
+// XP LOGIC
+// ══════════════════════════════════════
+function addXP(amount, reason) {
+  S.xp = Math.max(0, S.xp + amount);
+  S.log.unshift({ ts: Date.now(), amount, reason });
+  if (S.log.length > 100) S.log.length = 100;
+  save();
+  pushToFirebase();
+  if (amount > 0) confetti();
+  toast((amount >= 0 ? '✅ +' : '⚠️ ') + Math.abs(amount) + ' XP — ' + reason);
+  render();
+}
+
+function getLevel() {
+  let lv = LEVELS[0];
+  for (const l of LEVELS) { if (S.xp >= l.xp) lv = l; }
+  return lv;
+}
+
+function getLevelProgress() {
+  const lv = getLevel();
+  const idx = LEVELS.indexOf(lv);
+  const next = LEVELS[idx + 1];
+  if (!next) return { pct: 100, cur: S.xp, next: S.xp, nextName: '✦ Max' };
+  const pct = Math.min(((S.xp - lv.xp) / (next.xp - lv.xp)) * 100, 100);
+  return { pct, cur: S.xp, nextXP: next.xp, nextName: 'Niv.' + next.n };
+}
+
+// ══════════════════════════════════════
+// WEEKLY CHECK
+// ══════════════════════════════════════
+function getWeek() {
+  const d = new Date(); const jan1 = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+}
+
+function weeklyAnswer(hadMot) {
+  const week = getWeek();
+  if (S.weeklyDone && S.weeklyWeek === week) { toast('✅ Déjà répondu cette semaine !'); return; }
+  S.weeklyDone = true; S.weeklyWeek = week;
+  if (!hadMot) {
+    addXP(50, 'Pas de mot dans le carnet');
+    S.streak++;
+    // Push pending action for parent validation
+    if (useFirebase && db) {
+      db.ref('families/' + S.familyCode + '/pending').push({
+        type:'weekly_check', label:'Pas de mot cette semaine',
+        childName: S.name, xp: 50, ts: Date.now(), status:'pending'
+      });
+    }
+  } else {
+    save();
+    pushToFirebase();
+  }
+  renderWeekly();
+}
+
+function declareNoScreen() {
+  if (useFirebase && db) {
+    db.ref('families/' + S.familyCode + '/pending').push({
+      type:'no_screen', label:'Journée sans écran',
+      childName: S.name, xp: 5, ts: Date.now(), status:'pending'
+    });
+    toast('📵 Déclaration envoyée aux parents');
+  } else {
+    addXP(5, 'Journée sans écran');
+  }
+}
+
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
+function render() {
+  const lv = getLevel(); const prog = getLevelProgress();
+  // Header
+  document.getElementById('hdrName').textContent = 'Hey ' + S.name + ' !';
+  document.getElementById('hdrXP').textContent = S.xp + ' XP';
+  // XP card
+  document.getElementById('dashName').textContent = S.name;
+  document.getElementById('dashXP').innerHTML = S.xp.toLocaleString() + ' <span class="xp-unit">XP</span>';
+  document.getElementById('dashLv').textContent = '⚡ Niveau ' + lv.n + ' — ' + lv.title;
+  document.getElementById('barLblL').textContent = S.xp + ' XP';
+  document.getElementById('barLblR').textContent = prog.nextName + ' — ' + (prog.nextXP || '∞') + ' XP';
+  setTimeout(()=>{ document.getElementById('barFill').style.width = prog.pct + '%'; }, 100);
+  // Streak
+  const sr = document.getElementById('streakRow'); sr.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const d = document.createElement('div');
+    d.className = 's-dot' + (i < S.streak - 1 ? ' done' : i === S.streak - 1 ? ' cur' : '');
+    d.textContent = i < S.streak - 1 ? '✓' : i === S.streak - 1 ? '★' : '·';
+    sr.appendChild(d);
+  }
+  // Log
+  const ll = document.getElementById('logList');
+  if (S.log.length === 0) {
+    ll.innerHTML = '<div style="padding:16px;text-align:center;color:var(--mut);font-size:13px">Aucun événement</div>';
+  } else {
+    ll.innerHTML = S.log.slice(0,8).map(l => {
+      const d = new Date(l.ts); const ago = timeSince(d);
+      return '<div class="log-item"><div class="log-ico" style="background:rgba(61,126,255,0.1)">' +
+        (l.amount > 0 ? '⬆' : '⬇') + '</div><div class="log-txt">' + l.reason +
+        '<div class="log-sub">' + ago + '</div></div>' +
+        '<div class="log-xp ' + (l.amount>=0?'p':'n') + '">' +
+        (l.amount>=0?'+':'') + l.amount + ' XP</div></div>';
+    }).join('');
+  }
+  // Badges
+  renderBadges();
+  // Shop
+  renderShop();
+  // Weekly
+  renderWeekly();
+}
+
+function renderShop() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('shopXP').textContent = S.xp + ' XP';
+  document.getElementById('shopBal').textContent = '⚡ ' + S.xp + ' XP disponibles';
+  const owned = Object.values(S.parts).filter(Boolean).length;
+  const total = PARTS.length;
+  const pct = Math.round((owned/total)*100);
+  document.getElementById('dpTxt').textContent = owned + ' / ' + total + ' pièces débloquées';
+  document.getElementById('dpPct').textContent = pct + '%';
+  document.getElementById('dpFill').style.width = pct + '%';
+  const pl = document.getElementById('partsList');
+  pl.innerHTML = PARTS.map(p => {
+    const isOwned = S.parts[p.id];
+    const isAvail = !p.date || p.date <= today;
+    const canBuy = !isOwned && isAvail && S.xp >= 125;
+    const notYet = p.date && p.date > today;
+    let btn, cls;
+    if (isOwned) { btn = '<button class="pbtn own">✓ Obtenu</button>'; cls = 'owned'; }
+    else if (notYet) { btn = '<button class="pbtn lock">📅 ' + fmtDate(p.date) + '</button>'; cls = 'locked'; }
+    else if (canBuy) { btn = '<button class="pbtn buy" onclick="buyPart(event,\'' + p.id + '\')">Débloquer</button>'; cls = ''; }
+    else { btn = '<button class="pbtn lock">' + (S.xp < 125 ? 'Manque ' + (125-S.xp) + ' XP' : 'Indisponible') + '</button>'; cls = 'locked'; }
+    return '<div class="part ' + cls + '" style="position:relative">' +
+      (p.special ? '<div class="part-special-badge">Spécial</div>' : '') +
+      '<div class="part-img">' + p.icon + '</div>' +
+      '<div class="part-body"><div class="part-name">' + p.name + '</div>' +
+      '<div class="part-desc">' + p.desc + '</div>' +
+      '<div class="part-cost"><div class="part-price">' + (p.special ? 'Événement' : '125 XP') + '</div>' + btn + '</div></div></div>';
+  }).join('');
+}
+
+function buyPart(e, id) {
+  e.stopPropagation();
+  if (S.xp < 125) { toast('❌ Pas assez de XP'); return; }
+  if (S.parts[id]) { toast('✅ Déjà débloqué !'); return; }
+  S.xp -= 125; S.parts[id] = true;
+  S.log.unshift({ ts: Date.now(), amount: -125, reason: 'Pièce drone débloquée : ' + PARTS.find(p=>p.id===id).name });
+  save(); pushToFirebase(); confetti();
+  toast('🚁 Pièce débloquée !');
+  render();
+}
+
+function renderWeekly() {
+  const week = getWeek();
+  const done = S.weeklyDone && S.weeklyWeek === week;
+  const wc = document.getElementById('weeklyContent');
+  const nc = document.getElementById('nextCheck');
+  if (done) {
+    wc.innerHTML = '<div style="font-size:64px;margin-bottom:20px">🎉</div>' +
+      '<div class="w-title">Check-in effectué !</div>' +
+      '<div class="w-sub">Réponse enregistrée et envoyée aux parents pour validation.</div>' +
+      '<div class="w-done">✅ Semaine ' + week + ' validée</div>';
+    nc.style.display = 'block';
+    nc.innerHTML = '🔥 Streak : <strong>' + S.streak + ' semaine(s)</strong><br>' +
+      '<span style="color:var(--mut)">Prochain check-in : vendredi prochain à 17h</span>';
+  } else {
+    wc.innerHTML = '<div class="w-emoji">📔</div>' +
+      '<div class="w-title">Check-in du vendredi</div>' +
+      '<div class="w-sub">Sois honnête ! Tes parents peuvent vérifier. Ta réponse est enregistrée.</div>' +
+      '<div class="w-opts">' +
+      '<button class="wbtn no" onclick="weeklyAnswer(false)"><span>Non, aucun mot</span><span class="wbtn-xp">+50 XP</span></button>' +
+      '<button class="wbtn yes" onclick="weeklyAnswer(true)"><span>Oui, j\'ai eu un mot</span><span class="wbtn-xp">+0 XP</span></button>' +
+      '</div>';
+    nc.style.display = 'none';
+  }
+}
+
+function renderBadges() {
+  const br = document.getElementById('badgeRow');
+  br.innerHTML = BADGES_DEF.map(b => {
+    const earned = b.fn(S, S.parts);
+    return '<div class="badge ' + (earned ? 'earned' : 'locked') + '">' +
+      '<div class="badge-ico">' + b.ico + '</div>' +
+      '<div class="badge-lbl">' + b.name + '</div></div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// NAV
+// ══════════════════════════════════════
+function goto(screen, el) {
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('scr-'+screen).classList.add('on');
+  el.classList.add('on');
+}
+
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function confetti() {
+  const colors = ['#3d7eff','#7c3aed','#f5a623','#22c55e','#ec4899'];
+  for (let i=0;i<40;i++) {
+    const c = document.createElement('div'); c.className = 'confetti-p';
+    const dur = (1.2+Math.random()*1.3).toFixed(2)+'s';
+    c.style.cssText = 'left:'+Math.random()*100+'vw;top:'+Math.random()*30+'vh;background:'+colors[Math.floor(Math.random()*colors.length)]+';width:'+(5+Math.random()*7)+'px;height:'+(5+Math.random()*7)+'px;--d:'+dur;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 3000);
+  }
+}
+
+function timeSince(d) {
+  const s = Math.floor((Date.now()-d)/1000);
+  if(s<60) return 'À l\'instant'; if(s<3600) return Math.floor(s/60)+'min';
+  if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'j';
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso); return d.getDate()+'/'+(d.getMonth()+1);
+}
+</script>
+</body>
+</html>
