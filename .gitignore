@@ -1,0 +1,10 @@
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.iml
+.idea/
+# Firebase (ne pas versionner si données sensibles)
+# parent-web/firebase-config.js
+# android/app/src/main/assets/www/firebase-config.js
